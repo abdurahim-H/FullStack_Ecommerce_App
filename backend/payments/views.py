@@ -7,6 +7,14 @@ from account.models import StripeModel, OrderModel
 from rest_framework.decorators import permission_classes
 from datetime import datetime
 
+import os
+
+# Use a lightweight local Stripe mock in dev when USE_STRIPE_MOCK=1
+if os.getenv("USE_STRIPE_MOCK") == "1":
+    from .stripe_mock import stripe as stripe
+else:
+    import stripe
+
 
 # stripe secret test key
 stripe.api_key="your secret key here"
@@ -25,7 +33,10 @@ def save_card_in_db(cardData, email, cardId, customer_id, user):
         user = user,
     )
 
-
+    if os.getenv("USE_STRIPE_MOCK") == "1":
+        stripe.api_key = "your mock secret key here"
+    else:
+        stripe.api_key = "your secret key here"
 # Just for testing
 class TestStripeImplementation(APIView):
 
