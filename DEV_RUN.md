@@ -1,94 +1,118 @@
-Developer runbook — FullStack_Ecommerce_App
-=========================================
+DEV_RUN.md
+============
 
-Purpose
--------
-This document provides a concise, reproducible set of steps to get the project running for development and testing. It is targeted at developers who already have a working Git checkout of the repository.
+Quick developer runbook for the project (local dev, Linux).
 
 Prerequisites
--------------
-- Linux / macOS (Windows is supported but command examples use Bash)
-- Python 3.8+ (use a virtual environment)
-- Node.js (recommended LTS) and npm
-- Git access to the repository (your fork is the recommended remote for pushing changes)
+- Python 3.8+ virtual environment (the repo was tested with the workspace venv at ../.venv)
+- Node.js (the project was tested with Node >= 16; newer Node may need an OpenSSL workaround)
+- npm
 
-Repository layout (important paths)
-----------------------------------
-- backend/         — Django project
-- frontend/        — React app
-- backend/requirements.txt — Python dependencies
+1) Backend: create & use virtualenv, install deps, run migrations
 
-Quick start (recommended)
--------------------------
-1. Create and activate a Python virtual environment (from repo root):
-
+- Activate your venv (example used in this workspace):
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
+source /home/abdurahim/Desktop/Andrew_samples/.venv/bin/activate
+```
+
+- Install Python deps (only if you changed requirements):
+```bash
 pip install -r backend/requirements.txt
 ```
 
-2. Apply backend migrations and start the Django server (use the local Stripe mock for development):
-
+- Apply migrations (required once after cloning or when migrations change):
 ```bash
-export USE_STRIPE_MOCK=1        # makes payments use backend/payments/stripe_mock.py
 cd backend
 python manage.py migrate --noinput
+```
+
+2) Backend: start the Django dev server (use Stripe mock for local dev)
+
+- The repo includes a dev-only Stripe mock. Start the backend with the mock enabled:
+```bash
+export USE_STRIPE_MOCK=1
+cd /home/abdurahim/Desktop/Andrew_samples/FullStack_Ecommerce_App/backend
 python manage.py runserver 127.0.0.1:8000
 ```
 
-3. Start the frontend dev server (new terminal):
+Notes:
+- When `USE_STRIPE_MOCK=1` the backend uses `backend/payments/stripe_mock.py` instead of contacting Stripe.
+- Backend APIs are available under /api/ (for example: http://127.0.0.1:8000/api/products/)
 
+3) Frontend: install deps and start dev server
+
+- From the repo root:
 ```bash
-cd frontend
-npm ci                        # reproducible install
-export NODE_OPTIONS=--openssl-legacy-provider  # only if you encounter OpenSSL errors on recent Node
-npm start
+cd /home/abdurahim/Desktop/Andrew_samples/FullStack_Ecommerce_App/frontend
+npm install --no-audit --no-fund
 ```
 
-Create a test user and sample product (optional)
------------------------------------------------
-Run these from the `backend` folder:
-
+- If you see OpenSSL errors (ERR_OSSL_EVP_UNSUPPORTED) with newer Node.js, start the dev server with this environment variable:
 ```bash
-python manage.py shell -c "from django.contrib.auth import get_user_model; User=get_user_model(); u,created=User.objects.get_or_create(username='ui_test_user', defaults={'email':'ui_test@example.com'}); u.set_password('testpass123'); u.save(); print('created' if created else 'exists',u.username)"
+export NODE_OPTIONS=--openssl-legacy-provider
+nohup npm start > /tmp/frontend.log 2>&1 &
+```
 
+- After a successful start you should see:
+  Local: http://localhost:3000
+  On Your Network: http://<your-ip>:3000
+
+4) Create a test user and sample product (optional, handy for manual tests)
+
+- Create a test user:
+```bash
+cd /home/abdurahim/Desktop/Andrew_samples/FullStack_Ecommerce_App/backend
+python manage.py shell -c "from django.contrib.auth import get_user_model; User=get_user_model(); u,created=User.objects.get_or_create(username='ui_test_user', defaults={'email':'ui_test@example.com'}); u.set_password('testpass123'); u.save(); print('created' if created else 'exists',u.username)"
+```
+
+- Create a sample product (if you need one):
+```bash
 python manage.py shell -c "from product.models import Product; Product.objects.get_or_create(name='Test Laptop', defaults={'description':'Sample','price':'1299.99','stock':True})"
 ```
 
-Environment variables and secrets
---------------------------------
-- Do not commit secrets. Use environment variables for keys, e.g.:
-  - STRIPE_SECRET_KEY
-  - DJANGO_SECRET_KEY
+5) Useful checks and troubleshooting
 
-Troubleshooting
----------------
-- Stripe import error on startup: if Django fails importing `stripe` (ModuleNotFoundError referencing `stripe.six.moves`) either:
-  - Run with `USE_STRIPE_MOCK=1` (recommended for local dev), or
-  - Pin a compatible stripe version and install `six` in the venv (e.g. `stripe==12.4.0` and `six==1.17.0`) and reinstall dependencies.
-- Frontend OpenSSL errors with newer Node: set `NODE_OPTIONS=--openssl-legacy-provider` before `npm start`.
-
-Quick checks
-------------
-- Verify frontend is listening on :3000:
-  - `ss -ltnp | grep ':3000' || true`
-- Confirm backend API returns products:
-  - `curl -sS http://127.0.0.1:8000/api/products/ | python -m json.tool`
-
-Git and collaboration notes
----------------------------
-- This repository should be worked from your fork. Example to add your fork and push a branch:
-
+- Confirm the frontend is listening on port 3000:
 ```bash
-git remote add myfork https://github.com/<your-username>/FullStack_Ecommerce_App.git
-git push myfork main
+ss -ltnp | grep ':3000' || true
+tail -n 200 /tmp/frontend.log
 ```
 
-If you plan to open a pull request against the upstream repository, create a topic branch and push it to your fork.
+- Confirm API returns products:
+```bash
+curl -sS http://127.0.0.1:8000/api/products/ | python -m json.tool
+```
 
-Contact / support
------------------
-If your teammates need help getting set up, share this doc and the fork URL. For environment-specific problems (Stripe errors, Python version mismatches) share the error text and I will help reproduce and fix.
+- If http://127.0.0.1:8000/ shows a Django 404: that's expected — use the frontend at :3000 for the SPA and /api/ for backend endpoints.
 
--- end of runbook
+- If Stripe import errors occur under Python 3.12, ensure `USE_STRIPE_MOCK=1` for local runs or pin the `stripe`/`six` versions in `backend/requirements.txt`.
+
+6) Stopping servers
+
+- Stop backend: Ctrl+C in the terminal running manage.py, or kill the python PID.
+- Stop frontend: kill the `node` process shown by `ps -ef | grep react-scripts` or `pkill -f "react-scripts"`.
+
+7) Git / branch notes
+
+- Cleanup branch used locally: `feature/cleanup` (commits with cleanup and stripe mock). The branch is local and was not pushed to the original upstream by default.
+- To push to your fork (example):
+```bash
+git remote add myfork git@github.com:<your-username>/FullStack_Ecommerce_App.git
+git push myfork feature/cleanup
+```
+
+8) Quick checklist (one-liner commands)
+
+```bash
+# backend
+source /home/abdurahim/Desktop/Andrew_samples/.venv/bin/activate
+cd backend && pip install -r requirements.txt && python manage.py migrate --noinput
+export USE_STRIPE_MOCK=1; python manage.py runserver 127.0.0.1:8000
+
+# frontend
+cd ../frontend; npm install; export NODE_OPTIONS=--openssl-legacy-provider; nohup npm start > /tmp/frontend.log 2>&1 &
+```
+
+If anything above fails for you, paste the failing command output and I will fix the instructions or the project files.
+
+-- end of DEV_RUN.md

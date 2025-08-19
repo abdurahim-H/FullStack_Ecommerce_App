@@ -198,3 +198,64 @@ after downloading/cloning the repository code follow below steps:
 
 <p><a href="#top">Back to Top</a></p>
 
+## Development
+This project uses a Django backend and React frontend. The following steps get a developer environment running.
+
+Prerequisites
+- Python 3.8+ and a virtual environment
+- Node.js (LTS recommended) and npm
+
+Quick start (from repository root)
+
+1) Create and activate a Python virtual environment and install backend deps:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r backend/requirements.txt
+```
+
+2) Run migrations and start the backend (developer mode):
+
+```bash
+export USE_STRIPE_MOCK=1  # use local Stripe mock for development
+cd backend
+python manage.py migrate --noinput
+python manage.py runserver 127.0.0.1:8000
+```
+
+3) Start the frontend (new terminal):
+
+```bash
+cd frontend
+npm ci
+# If you encounter OpenSSL errors on newer Node versions:
+export NODE_OPTIONS=--openssl-legacy-provider
+npm start
+```
+
+Optional: create a test user and sample product (from `backend`):
+
+```bash
+python manage.py shell -c "from django.contrib.auth import get_user_model; User=get_user_model(); u,created=User.objects.get_or_create(username='ui_test_user', defaults={'email':'ui_test@example.com'}); u.set_password('testpass123'); u.save(); print('created' if created else 'exists',u.username)"
+
+python manage.py shell -c "from product.models import Product; Product.objects.get_or_create(name='Test Laptop', defaults={'description':'Sample','price':'1299.99','stock':True})"
+```
+
+Notes & troubleshooting
+- Run with `USE_STRIPE_MOCK=1` locally to avoid real Stripe calls and common package/version issues.
+- If Django fails importing `stripe` with errors referencing `stripe.six.moves`, pin a compatible version and install `six` in the venv (example: `stripe==12.4.0` and `six==1.17.0`) and reinstall dependencies.
+- To verify the frontend is running: `ss -ltnp | grep ':3000' || true`.
+- To query products API: `curl -sS http://127.0.0.1:8000/api/products/ | python -m json.tool`.
+
+Contribution & forks
+- Work from your fork; add it as a remote and push branches there:
+
+```bash
+git remote add myfork https://github.com/<your-username>/FullStack_Ecommerce_App.git
+git push myfork main
+```
+
+If you plan to open a PR against upstream, create a feature/topic branch and push it to your fork.
+
+
