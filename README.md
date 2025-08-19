@@ -27,93 +27,87 @@ code to run locally).
   * [Card_Settings_Page](#Card_Settings_Page)
   * [Card_Update_Page](#Card_Update_Page)
   * [Login_Page](#Login_Page)
-  * [Register_Page](#Register_Page)
-  * [User_Account_Page](#User_Account_Page)
-  * [Update_User_Account_Page](#Update_User_Account_Page)
-  * [Delete_User_Account_Page](#Delete_User_Account_Page)
-  * [Other_Functionalities](#Other_Functionalities)
-- [Installation](#Installation)
-  * [Backend](#backend)
-  * [Frontend](#frontend)
+  ## Installation & development (quick start)
+  The project has a Django backend and a React frontend. The steps below use a single, consistent venv at the repository root (`.venv`). Follow them from the repository root.
 
-## About_this_App
-An Ecommerce app where users can purchase products by using their stripe card.  Users are allowed to visit our website and free to look any product details. User needs to create an account on our website to proceed with the payment section. If a user want they can also delete their account anytime (NOTE: With the deletion of a user account all their info like Account details, Address details, Card details will be deleted as well)
+  Prerequisites
+  - Python 3.8+ and a virtual environment
+  - Node.js LTS (recommended 18.x or 20.x) and npm
 
-The website also provides the flexibility to create a new stripe card if they do not have one, the user can also pay with other user stripe card (if they provide the right email address linked with the card and other card details like Card Number, Exp Month, Exp Year and CVC). The user can also detete their stripe card if they like (Caution: With the deletion of their stripe card their account related to that card will also be deleted as well). 
+  Quick start (from repository root)
 
-## App_Overview
-### Products_List_Page
-This page displays all the available products on the website.
-<p align="center">
-  <img src="https://github.com/YashMarmat/Pages-App-django/blob/master/templates/ecommerce%20%20products%20list%20page.png?raw=true" width="100%">
-</p>
+  1) Create and activate a Python virtual environment and install backend dependencies
 
-### Product_Details_Page
-This page displays the details of the Product which user has selected from the products list page. Here, the user can see all the info of the Product such as product name, description, in stock or out of stock and pay with stripe button. For Admins, the website provides two more functionalities such as Updating the product and secondly deleting the product.
-<p align="center">
-  <img src="https://github.com/YashMarmat/Pages-App-django/blob/master/templates/ecommerce%20%20product%20details%20page.png?raw=true" width="100%">
-</p>
+  ```bash
+  python3 -m venv .venv
+  source .venv/bin/activate
+  pip install -r backend/requirements.txt
+  ```
 
-### Product_Edit_Page
-Only admins can visit this page, the page handles the editing of the Product in terms of image, name , description, price and in stock status. 
-<p align="center">
-  <img src="https://github.com/YashMarmat/Pages-App-django/blob/master/templates/ecommerce%20%20product%20edit%20page.png?raw=true" width="100%">
-</p>
+  2) Run migrations and start the backend (developer mode)
 
-### Add_Product_Page
-Only admins can visit this page, the pages handles the creation of product (requires product name,  image, description, price and in stock status.
-<p align="center">
-  <img src="https://github.com/YashMarmat/Pages-App-django/blob/master/templates/ecommerce%20%20add%20product%20page.png?raw=true" width="100%">
-</p>
+  ```bash
+  export USE_STRIPE_MOCK=1   # use local Stripe mock for development
+  # optionally set Stripe keys if you want to test real Stripe:
+  # export STRIPE_TEST_PUBLISHABLE_KEY=pk_test_...
+  # export STRIPE_TEST_SECRET_KEY=sk_test_...
 
-### Checkout_Page
-This page displays the info of the product which user has selected for the purchase. The page Contains the product information and provides pay with stripe card
-option. The user can also save their card for future payments. The user can also select or edit their address from the page.
+  cd backend
+  python manage.py migrate --noinput
+  python manage.py runserver 127.0.0.1:8000
+  ```
 
-<p align="center">
-  <img src="https://github.com/YashMarmat/Pages-App-django/blob/master/templates/ecommerce%20%20checkout%20page.png?raw=true" width="100%">
-</p>
+  3) Start the frontend (new terminal)
 
-### Payment_Confirmation_Page
-The page displays total amount info, the address selected by the user for delivery and the card number used for the purchase. The user can also select a different card and
-address from the same page if something wents wrong.
+  ```bash
+  cd frontend
+  # Prefer reproducible installs for CI/devs:
+  npm ci
 
-<p align="center">
-  <img src="https://github.com/YashMarmat/Pages-App-django/blob/master/templates/ecommerce%20%20payment%20confirmation%20page.png?raw=true" width="100%">
-</p>
+  # If `npm ci` fails because package.json and package-lock.json are out of sync,
+  # run `npm install` to update the lockfile, then commit the updated
+  # `frontend/package-lock.json` so others can use `npm ci`:
+  # npm install
 
-### Payment_Successfull_Page
-The Page displays the confirmation of the product purchase. Also, provides info like which product is bought and how much amount was paid for it. Go to orders page is
-also provided to see the order details.
+  # If you see OpenSSL errors on newer Node versions, add this before start:
+  export NODE_OPTIONS=--openssl-legacy-provider
+  npm start
+  ```
 
-<p align="center">
-  <img src="https://github.com/YashMarmat/Pages-App-django/blob/master/templates/ecommerce%20%20payment%20successfull%20page.png?raw=true" width="100%">
-</p>
+  Quick verification
 
-### Orders_Page_For_User
-The page displays the list of all the orders made by user, with the details like their name, card number used, date of purchase, address etc.
+  ```bash
+  # API should return JSON
+  curl -sS http://127.0.0.1:8000/api/products/ | python -m json.tool
 
-<p align="center">
-  <img src="https://github.com/YashMarmat/Pages-App-django/blob/master/templates/ecommerce%20%20orders%20page%20for%20normal%20user.png?raw=true" width="100%">
-</p>
+  # frontend -> http://localhost:3000
+  ```
 
-### Orders_Page_For_Admin
-For admin user the page display the list of all users order information. The admin can change the status of product delivery status as well. A search bar is also
-provided to locate the orders with more flexibility (can search the orders by customer name, address and product name)
+  Troubleshooting (short)
 
-<p align="center">
-  <img src="https://github.com/YashMarmat/Pages-App-django/blob/master/templates/ecommerce%20%20orders%20page%20for%20admin.png?raw=true" width="100%">
-</p>
+  - package-lock mismatch: If `npm ci` errors with "lock file ... does not satisfy", run `npm install` to regenerate `package-lock.json`, then commit the lockfile to the repo.
+  - Node version: prefer Node LTS (18.x or 20.x). Newer Node releases may require `NODE_OPTIONS=--openssl-legacy-provider` for older dependencies.
+  - Port conflicts: backend default 8000, frontend default 3000. Find and stop blockers with:
 
-### Address_Settings_Page
-Here, the user can view their addresses, the page also provides creation of new address and can edit or delete it as well.
-<p align="center">
-  <img src="https://github.com/YashMarmat/Pages-App-django/blob/master/templates/ecommerce%20%20address%20settings%20page.png?raw=true" width="100%">
-</p>
+  ```bash
+  ss -ltnp | grep ':3000\|:8000'
+  # then kill <pid>
+  ```
+  - Stripe: set `STRIPE_TEST_*` env vars or use `USE_STRIPE_MOCK=1` to avoid calling real Stripe in local dev.
+  - stripe import errors: if Django errors reference `stripe.six.moves`, install compatible stripe & six versions in the venv (example: `stripe==12.4.0` and `six==1.17.0`) and reinstall.
 
-### Address_Create_Page
-Here, the user can create their new address.
-<p align="center">
+  Notes on reproducibility
+  - If you choose to run `npm install` locally to fix a lockfile mismatch, commit the updated `frontend/package-lock.json` so collaborators can use `npm ci` for clean, reproducible installs.
+
+  Contribution & forks
+  - Work from your fork; add it as a remote and push branches there:
+
+  ```bash
+  git remote add myfork https://github.com/<your-username>/FullStack_Ecommerce_App.git
+  git push myfork main
+  ```
+
+  If you plan to open a PR against upstream, create a feature branch and push it to your fork.
   <img src="https://github.com/YashMarmat/Pages-App-django/blob/master/templates/ecommerce%20%20address%20create%20page.png?raw=true" width="50%">
 </p>
 
