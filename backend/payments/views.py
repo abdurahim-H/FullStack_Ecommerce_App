@@ -121,16 +121,29 @@ class CreateCardTokenView(APIView):
             customer = customer_data[0]
             message = "Customer already exists"
 
-            actual_cn = customer.sources.data[0].last4 # holds card number (last four digits)
-            actual_em = customer.sources.data[0].exp_month
-            actual_ey = customer.sources.data[0].exp_year
+            # normalize values so string/int mismatches don't mark valid cards as invalid
+            actual_cn = str(customer.sources.data[0].last4)  # holds card number (last four digits)
+            try:
+                actual_em = int(customer.sources.data[0].exp_month)
+            except (TypeError, ValueError):
+                actual_em = None
+            try:
+                actual_ey = int(customer.sources.data[0].exp_year)
+            except (TypeError, ValueError):
+                actual_ey = None
 
-            recieved_cn = data["number"]
+            recieved_cn = data.get("number", "")
             last4_recieved_cn = recieved_cn[-4:]
-            recieved_em = data["exp_month"]
-            recieved_ey = data["exp_year"]
+            try:
+                recieved_em = int(data.get("exp_month"))
+            except (TypeError, ValueError):
+                recieved_em = None
+            try:
+                recieved_ey = int(data.get("exp_year"))
+            except (TypeError, ValueError):
+                recieved_ey = None
 
-            # comparing the last4 digits of card provided by the user with the last4 digits of card present on stripe
+            # comparing the last4 digits and expiry values of card provided by the user with the one on stripe
             if actual_cn != last4_recieved_cn or actual_em != recieved_em or actual_ey != recieved_ey:
                 card_invalid = True
         
