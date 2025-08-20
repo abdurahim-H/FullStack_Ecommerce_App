@@ -11,7 +11,13 @@ Quick start (validated)
 ```bash
 cd FullStack_Ecommerce_App
 python3 -m venv .venv
-# FullStack_Ecommerce_App
+# Activate the virtual environment (Linux / macOS)
+source .venv/bin/activate
+
+# For Windows (PowerShell):
+# .venv\Scripts\Activate.ps1
+
+```
 
 A FullStack Ecommerce App built with Django and React. 
 <p id ="top" align="center">
