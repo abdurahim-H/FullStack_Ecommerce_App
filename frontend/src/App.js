@@ -44,7 +44,8 @@ const App = () => {
             <Route path="/all-addresses/" component={AllAddressesOfUserPage} exact />
             <Route path="/all-addresses/:id/" component={AddressUpdatePage} exact />
             <Route path="/all-orders/" component={OrdersListPage} exact />
-            <Route path="" component={NotFound} exact />
+            {/* catch-all NotFound route for any unmatched paths */}
+            <Route path="*" component={NotFound} />
           </Switch>
         </div>
       </Router>
